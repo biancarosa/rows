@@ -100,12 +100,13 @@ class PluginXlsTestCase(utils.RowsTestMixIn, unittest.TestCase):
     def test_export_to_xls_fobj(self):
         # TODO: may test with codecs.open passing an encoding
         # TODO: may test file contents
-        temp = tempfile.NamedTemporaryFile(delete=False, mode='wb')
-        self.files_to_delete.append(temp.name)
-        rows.export_to_xls(utils.table, temp.file)
-        temp.file.close()
+        tempfilename = tempfile.mktemp() + '.xls'
+        temp = open(tempfilename, mode='wb')
+        self.files_to_delete.append(tempfilename)
+        rows.export_to_xls(utils.table, temp)
+        temp.close()
 
-        table = rows.import_from_xls(temp.name)
+        table = rows.import_from_xls(tempfilename)
         self.assert_table_equal(table, utils.table)
 
     @mock.patch('rows.plugins.xls.prepare_to_export')

@@ -19,6 +19,7 @@ from __future__ import unicode_literals
 
 import datetime
 import itertools
+import os
 
 from decimal import Decimal
 from io import BytesIO
@@ -161,18 +162,18 @@ def import_from_xls(filename_or_fobj, sheet_name=None, sheet_index=0,
 
 def export_to_xls(table, filename_or_fobj=None, sheet_name=None, sheet_name_format='Sheet{index}',
                   *args, **kwargs):
-  
     
     work_book = xlwt.Workbook()
         
     if sheet_name is None:
         sheet_names = []
+        filename, fobj = get_filename_and_fobj(filename_or_fobj, dont_open=True)
         try:
-            filename, _ = get_filename_and_fobj(filename_or_fobj, mode='rb')
-            book = xlrd.open_workbook(filename, formatting_info=True)
-            sheet_names = book.sheet_names()
-            work_book = copy(book)
-        except Exception:
+            if filename and os.path.exists(filename):
+                book = xlrd.open_workbook(filename, formatting_info=True)
+                sheet_names = book.sheet_names()
+                work_book = copy(book)
+        except xlrd.XLRDError as e:
             pass
         sheet_name = make_unique_name(sheet_name_format.format(index=1),
                                       existing_names=sheet_names,
