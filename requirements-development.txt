@@ -8,6 +8,7 @@ parquet>=1.1
 requests
 xlrd
 xlwt
+xlutils
 file-magic
 
 # Test tools

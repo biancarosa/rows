@@ -18,6 +18,7 @@
 from __future__ import unicode_literals
 
 import datetime
+import itertools
 
 from decimal import Decimal
 from io import BytesIO
@@ -25,10 +26,12 @@ from io import BytesIO
 import xlrd
 import xlwt
 
+from xlutils.copy import copy
+
 import rows.fields as fields
 
 from rows.plugins.utils import (create_table, get_filename_and_fobj,
-                                prepare_to_export)
+                                make_unique_name, prepare_to_export)
 
 
 CELL_TYPES = {
@@ -139,6 +142,7 @@ def import_from_xls(filename_or_fobj, sheet_name=None, sheet_index=0,
 
     filename, _ = get_filename_and_fobj(filename_or_fobj, mode='rb')
     book = xlrd.open_workbook(filename, formatting_info=True)
+    #import pdb; pdb.set_trace()
     if sheet_name is not None:
         sheet = book.sheet_by_name(sheet_name)
     else:
@@ -155,11 +159,25 @@ def import_from_xls(filename_or_fobj, sheet_name=None, sheet_index=0,
             'sheet_name': sheet.name, }
     return create_table(table_rows, meta=meta, *args, **kwargs)
 
-
-def export_to_xls(table, filename_or_fobj=None, sheet_name='Sheet1', *args,
-                  **kwargs):
-
+def export_to_xls(table, filename_or_fobj=None, sheet_name=None, sheet_name_format='Sheet{index}',
+                  *args, **kwargs):
+  
+    
     work_book = xlwt.Workbook()
+        
+    if sheet_name is None:
+        sheet_names = []
+        try:
+            filename, _ = get_filename_and_fobj(filename_or_fobj, mode='rb')
+            book = xlrd.open_workbook(filename, formatting_info=True)
+            sheet_names = book.sheet_names()
+            work_book = copy(book)
+        except Exception:
+            pass
+        sheet_name = make_unique_name(sheet_name_format.format(index=1),
+                                      existing_names=sheet_names,
+                                      name_format=sheet_name_format,
+                                      start=1)
     sheet = work_book.add_sheet(sheet_name)
 
     prepared_table = prepare_to_export(table, *args, **kwargs)
