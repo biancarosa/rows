@@ -140,3 +140,25 @@ class PluginXlsTestCase(utils.RowsTestMixIn, unittest.TestCase):
 
         table2 = rows.import_from_xls(filename)
         self.assert_table_equal(table, table2)
+        
+    def test_export_to_file_create_unique_sheet_name(self):
+        temp = tempfile.NamedTemporaryFile(delete=False)
+        filename = '{}.{}'.format(temp.name, self.file_extension)
+        self.files_to_delete.append(filename)
+
+        first_table = rows.Table(fields=
+                OrderedDict([('jsoncolumn', rows.fields.JSONField)]))
+        first_table.append({'jsoncolumn': '{"python": 42}'})
+        second_table = rows.Table(fields=
+                OrderedDict([('jsoncolumn', rows.fields.JSONField)]))
+        second_table.append({'jsoncolumn': '{"python": 66}'})
+        
+        rows.export_to_xls(first_table, filename)
+        rows.export_to_xls(second_table, filename)
+
+        result_first_table = rows.import_from_xls(filename, sheet_name='Sheet1') # sheet 1
+        self.assert_table_equal(first_table, result_first_table)
+        
+        result_second_table = rows.import_from_xls(filename, sheet_name='Sheet2') # sheet 2
+        self.assert_table_equal(second_table, result_second_table)
+        
